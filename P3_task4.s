@@ -42,17 +42,17 @@ task4:
 
 exec:
 	// Get input A
-	LDR R12, [R1] 				// Load the GPIOA_IDR values from address at R1 and store it in R12
+	LDR R12, [R1] 			// Load the GPIOA_IDR values from address at R1 and store it in R12
 	UBFX R12, R12, #8, #1		// Get 1 bit @ position 8 from R12, store in R12 - Input A
 
-	CMP R12, #1					// Compare Input A(R12) to high
-	ITTEE EQ					// If Input A is high
-		ADDEQ R5, R5, #1		// Increment current offset (R4) by #1
-		ANDEQ R5, R5, #7		// Mask the lower 3 bits (#7 = 111) in the current offset (R5) [8 wraps to 0]
-								// If Input A is low
-		LSRNE R12, R2, R6		// Take the next state map(R2), Shift right by R6 digits. Store in R12
-		ANDNE R5, R12, #7		// Mask the lower 3 bits (7 = 111b) and store them in the current offset(R5)
-	MUL R6, R5, R11				// Multiply the current offset (R5) by 3 (R11). Store our new position within
+	CMP R12, #1			// Compare Input A(R12) to high
+	ITTEE EQ			// If Input A is high
+		ADDEQ R5, R5, #1	// Increment current offset (R4) by #1
+		ANDEQ R5, R5, #7	// Mask the lower 3 bits (#7 = 111) in the current offset (R5) [8 wraps to 0]
+					// If Input A is low
+		LSRNE R12, R2, R6	// Take the next state map(R2), Shift right by R6 digits. Store in R12
+		ANDNE R5, R12, #7	// Mask the lower 3 bits (7 = 111b) and store them in the current offset(R5)
+	MUL R6, R5, R11			// Multiply the current offset (R5) by 3 (R11). Store our new position within
 								// the next state map at R6.
 
 								// Update the 7 Segment Display
