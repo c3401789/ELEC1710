@@ -1,69 +1,80 @@
+// 88 bytes
 .syntax unified
-  .cpu cortex-m3
-  .thumb
-  .global task4
+.cpu cortex-m3
+.thumb
+.global task4
 
-.equ	GPIOC_ODR,	0x4001100C	// For 7-seg on pins 0 to 7
+.equ	GPIOC_ODR,	0x4001100C	// For 7-seg on pins 0 to 6
 .equ	GPIOA_IDR,	0x40010808	// For custom buttons on pins 8-11
+.equ	DELAY,		0x800000	// Approx 1 second delay
+.equ	NEXT_STATES,0x36CD2		// 000 000 110 110 110 011 010 010
 
-// Entry point from main.c
-// 134218154 - 134218064 : 90 bytes
+/*
+========= Hardware Configuration =========
+Input switches:
+	Input A: 		PA8
+	Input CLK:		PA9
+Output 7-Segment Display:
+	Segment A:		PC0
+	Segment B:		PC1
+	Segment C:		PC2
+	Segment D:		PC3
+	Segment E:		PC4
+	Segment F:		PC5
+	Segment G:		PC6
+	Segment H:		Not configured
+==========================================
+*/
+//134218064 - 134218152
 task4:
-	/*
-	The next state is stored with 3 bits based on the position which is the current state
-	7	6	5	4	3	2	1	0
-	000 000 110 110 110 011 010 010 -> 0x36CD2
-	Can only store 16 bits per MOV, do a lower and upper inst
-	*/
-	LDR R0, =data			// Store output data for LED into R0
-	MOV R1, 0				// Store current state into R1
-	MOVW R2, #0x6CD2   		// Store next-state, lower 16 bits in R2
-	MOVT R2, #0x0003   		// Store next-state, upper 16 bits in R2
-	MOV R4, #3				// Store multiplier for MUL constant in update_even
-	MOV R5, #0				// Store initial bit offset of 0 for update_even
-	LDR R7, =GPIOC_ODR		// Store address of output data register
-	LDR R8, =GPIOA_IDR 		// Store address of input data register
-	MOV R9, #0x800000		// Store delay interval
-	MOV R10, #0x0
+	// Initial start up values
+	LDR R0, =GPIOC_ODR			// Load address of GPIOC Uutput Data Register into R0
+	LDR R1, =GPIOA_IDR			// Load address of GPIOA Input Data Register into R1
+	LDR R2, =NEXT_STATES			// Load the Q values into R2
+	LDR R3, =DELAY				// Load the delay into R3, approx 1s
+	LDR R4, =ssegdata			// Load the LUT address into R4
+	MOV R5, #7				// Current offset [Start at last so next is first]
+	MOV R6, #21				// Bit position within next states [Start at last so next is first]
+	MOV R11, #3				// Constant for multiplier
+	MOV R12, #0				// Input A pin value
 
-	B loop					// branch to loop label
+						// Continue to exec label
 
+exec:
+	// Get input A
+	LDR R12, [R1] 				// Load the GPIOA_IDR values from address at R1 and store it in R12
+	UBFX R12, R12, #8, #1		// Get 1 bit @ position 8 from R12, store in R12 - Input A
 
-loop:
-	// Delay loop
-	SUB R9, R9, #1			// Subtract 1 from R9
-	CMP R9, 0				// Compare R9 to 0
-	IT GT					// if greater than 0
-		BGT loop			// Branch back to loop
-	MOV R9, #0x800000		// Reset delay counter
+	CMP R12, #1					// Compare Input A(R12) to high
+	ITTEE EQ					// If Input A is high
+		ADDEQ R5, R5, #1		// Increment current offset (R4) by #1
+		ANDEQ R5, R5, #7		// Mask the lower 3 bits (#7 = 111) in the current offset (R5) [8 wraps to 0]
+								// If Input A is low
+		LSRNE R12, R2, R6		// Take the next state map(R2), Shift right by R6 digits. Store in R12
+		ANDNE R5, R12, #7		// Mask the lower 3 bits (7 = 111b) and store them in the current offset(R5)
+	MUL R6, R5, R11				// Multiply the current offset (R5) by 3 (R11). Store our new position within
+								// the next state map at R6.
 
-	// Update LED
-	LDRB R6, [R0, R1] 		// Load 1 byte from data[R0] at position state[R1], store in R6
-    STR R6, [R7]			// Store the byte at R6 into ODR[R7]
+								// Update the 7 Segment Display
+	LDRB R12, [R4, R5]			// Load byte from memory, at address stored in R1 + offset (R4) - save to R2
+	STR R12, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 
-    // Update Input pin
-	LDR R10, [R8] 			// Load the data at address GPIOA_IDR into r10
-	UBFX R10, R10, #8, #1 	// extract 1 bit at position 8 from R10, store back into R10
+	BL delay					// Branch to delay label, storing the return address in the link register
+  	B exec   					// branch back to exec
 
-	// Compare input state
-	CMP R10, #0				// check if the input is 0: low, 1:high
-	ITTEE EQ				// IF then block
-		// Input not pushed
-		ADDEQ R1, R1, #1	// Increment R1 by 1
-		ANDEQ R1, R1, #7	// Apply mask (111) to wrap the value at 8 (1000) back to (000)
-		// Input was pushed
-		LSRNE R3, R2, R5	// Shift R2 right by the value in R1 (position), store the result in R3
-		ANDNE R1, R3, #0x7	// Apply mask (111) to (24 bits in R3), ignoring bits 24-4, store in R1
-	// Mutliple R1 and R4, store in R5. R5 used to store bit offset
-	MUL R5, R1, R4			// MULTIPLY R1(STATE 0-7) BY 3, STORE IN R5
-
-	B loop					// Return to loop label
-
+delay:
+	SUB R3, R3, #1				// Subtract 1 from R3 and store result back in R3
+	CMP R3, #0					// Compare R3 to 0
+	IT GT						// If R3 is greater than 0
+		BGT delay				// return to top of delay label
+								// R3 is not greater than 0
+	LDR R3, =DELAY				// Reset the delay counter
+	BX LR						// return to link register address
 
 
 .align 4
-data:
-	.byte 0x39  // C
+ssegdata:   // The LUT
+    .byte 0x39  // C
     .byte 0x4F  // 3
     .byte 0x66  // 4
     .byte 0x3F  // 0
