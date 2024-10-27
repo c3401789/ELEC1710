@@ -30,15 +30,15 @@ task4:
 	// Initial start up values
 	LDR R0, =GPIOC_ODR			// Load address of GPIOC Uutput Data Register into R0
 	LDR R1, =GPIOA_IDR			// Load address of GPIOA Input Data Register into R1
-	LDR R2, =NEXT_STATES			// Load the Q values into R2
+	LDR R2, =NEXT_STATES		// Load the Q values into R2
 	LDR R3, =DELAY				// Load the delay into R3, approx 1s
 	LDR R4, =ssegdata			// Load the LUT address into R4
-	MOV R5, #7				// Current offset [Start at last so next is first]
-	MOV R6, #21				// Bit position within next states [Start at last so next is first]
-	MOV R11, #3				// Constant for multiplier
-	MOV R12, #0				// Input A pin value
+	MOV R5, #7					// Current offset [Start at last so next is first]
+	MOV R6, #21					// Bit position within next states [Start at last so next is first]
+	MOV R11, #3					// Constant for multiplier
+	MOV R12, #0					// Input A pin value
 
-						// Continue to exec label
+								// Continue to exec label
 
 exec:
 	// Get input A
