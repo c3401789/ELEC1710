@@ -1,9 +1,14 @@
-  .syntax unified
-  .cpu cortex-m3
-  .thumb
-  .global task1
+// 36 bytes [134218100 - 134218064]
+.syntax unified
+.cpu cortex-m3
+.thumb
+.global task1
 
 .equ	GPIOC_ODR,	0x4001100C	// For 7-seg on pins 0 to 6
+
+
+
+
 
 /*
 ========= Hardware Configuration =========
@@ -27,32 +32,32 @@ task1:
 	LDR R0, =GPIOC_ODR			// Load address of GPIOC output data register into R0
 	LDR R1, =ssegdata			// Load address of look-up table into R1
 
-exec:
+loop:
 	LDRB R2, [R1, #12]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 
-	LDRB R2, [R1, #3]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #3]			// Load byte from memory, at address stored in R1 + offset #3 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 
-	LDRB R2, [R1, #4]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #4]			// Load byte from memory, at address stored in R1 + offset #4 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 
-	LDRB R2, [R1, #0]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #0]			// Load byte from memory, at address stored in R1 + offset #0 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 
-	LDRB R2, [R1, #1]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #1]			// Load byte from memory, at address stored in R1 + offset #1 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 
-	LDRB R2, [R1, #7]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #7]			// Load byte from memory, at address stored in R1 + offset #7 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 
-	LDRB R2, [R1, #8]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #8]			// Load byte from memory, at address stored in R1 + offset #8 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 
-	LDRB R2, [R1, #9]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #9]			// Load byte from memory, at address stored in R1 + offset #9 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 
-  	B exec   					// Return to task1
+  	B loop   					// Return to task1; TODO remove, not required for task
 
 .align 4
 ssegdata:   // The LUT
