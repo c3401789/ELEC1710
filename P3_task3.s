@@ -1,11 +1,14 @@
-// 1787 bytes
-  .syntax unified
-  .cpu cortex-m3
-  .thumb
-  .global task3
+// 44 bytes [134218108 - 134218064]
+.syntax unified
+.cpu cortex-m3
+.thumb
+.global task3
 
 .equ	GPIOC_ODR,	0x4001100C	// For 7-seg on pins 0 to 6
 .equ	DELAY,		0x800000	// Approx 1 second delay
+
+
+
 
 /*
 ========= Hardware Configuration =========
@@ -31,8 +34,7 @@ task3:
 	LDR R3, =DELAY				// Store the value in DELAY into R3
 	MOV R4, 0					// Store the current offset
 								// Continue to exec label
-
-exec:
+loop:
 
 	LDRB R2, [R1, R4]			// Load byte from memory, at address stored in R1 + offset (R4) - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
@@ -41,7 +43,7 @@ exec:
 	ADD R4, R4, #1				// Increment current offset (R4) by #1
 	AND R4, R4, #7				// Mask the lower 3 bits (#7 = 111) in the current offset (R4) [8 wraps to 0]
 
-  	B exec   					// branch back to exec
+  	B loop   					// branch back to exec
 
 delay:
 	SUB R3, R3, #1				// Subtract 1 from R3 and store result back in R3
