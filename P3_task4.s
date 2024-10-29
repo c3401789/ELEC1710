@@ -1,4 +1,4 @@
-// 88 bytes
+// 88 bytes [134218064 - 134218152]
 .syntax unified
 .cpu cortex-m3
 .thumb
@@ -8,6 +8,7 @@
 .equ	GPIOA_IDR,	0x40010808	// For custom buttons on pins 8-11
 .equ	DELAY,		0x800000	// Approx 1 second delay
 .equ	NEXT_STATES,0x36CD2		// 000 000 110 110 110 011 010 010
+
 
 /*
 ========= Hardware Configuration =========
@@ -25,42 +26,42 @@ Output 7-Segment Display:
 	Segment H:		Not configured
 ==========================================
 */
-//134218064 - 134218152
+
 task4:
 	// Initial start up values
-	LDR R0, =GPIOC_ODR		// Load address of GPIOC Uutput Data Register into R0
-	LDR R1, =GPIOA_IDR		// Load address of GPIOA Input Data Register into R1
+	LDR R0, =GPIOC_ODR			// Load address of GPIOC Uutput Data Register into R0
+	LDR R1, =GPIOA_IDR			// Load address of GPIOA Input Data Register into R1
 	LDR R2, =NEXT_STATES		// Load the Q values into R2
-	LDR R3, =DELAY			// Load the delay into R3, approx 1s
-	LDR R4, =ssegdata		// Load the LUT address into R4
-	MOV R5, #7			// Current offset [Start at last so next is first]
-	MOV R6, #21			// Bit position within next states [Start at last so next is first]
-	MOV R11, #3			// Constant for multiplier
-	MOV R12, #0			// Input A pin value
+	LDR R3, =DELAY				// Load the delay into R3, approx 1s
+	LDR R4, =ssegdata			// Load the LUT address into R4
+	MOV R5, #7					// Current offset [Start at last so next is first]
+	MOV R6, #21					// Bit position within next states [Start at last so next is first]
+	MOV R11, #3					// Constant for multiplier
+	MOV R12, #0					// Input A pin value
 
-					// Continue to exec label
+								// Continue to exec label
 
-exec:
+loop:
 	// Get input A
-	LDR R12, [R1] 			// Load the GPIOA_IDR values from address at R1 and store it in R12
-	UBFX R12, R12, #8, #1		// Get 1 bit @ position 8 from R12, store in R12 - Input A
+	LDR R12, [R1] 				// Load the GPIOA_IDR data from the address stored at R1 and store it in R12
+	UBFX R12, R12, #8, #1		// Get 1 bit from GPIOA_IDR(R12) Pin 8, store in Input A(R12)
 
-	CMP R12, #1			// Compare Input A(R12) to high
-	ITTEE EQ			// If Input A is high
-		ADDEQ R5, R5, #1	// Increment current offset (R4) by #1
-		ANDEQ R5, R5, #7	// Mask the lower 3 bits (#7 = 111) in the current offset (R5) [8 wraps to 0]
-					// If Input A is low
-		LSRNE R12, R2, R6	// Take the next state map(R2), Shift right by R6 digits. Store in R12
-		ANDNE R5, R12, #7	// Mask the lower 3 bits (7 = 111b) and store them in the current offset(R5)
-	MUL R6, R5, R11			// Multiply the current offset (R5) by 3 (R11). Store our new position within
-								// the next state map at R6.
+	CMP R12, #1					// Compare Input A(R12) to high
+	ITTEE EQ					// If Input A is high
+		ADDEQ R5, R5, #1		// Increment current offset (R5) by #1
+		ANDEQ R5, R5, #7		// Mask the lower 3 bits (#7 = 111) in the current offset (R5) [8 wraps to 0]
+								// If Input A is low
+		LSRNE R12, R2, R6		// Take the next state map(R2), Shift right by R6 digits. Store in R12
+		ANDNE R5, R12, #7		// Mask the lower 3 bits (7 = 111b) and store them in the current offset(R5)
+	MUL R6, R5, R11				// Multiply the current offset (R5) by 3 (R11). Store our new position within
+								// the next state map at R6
 
-								// Update the 7 Segment Display
-	LDRB R12, [R4, R5]			// Load byte from memory, at address stored in R1 + offset (R4) - save to R2
-	STR R12, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
+	// Update display
+	LDRB R12, [R4, R5]			// Load byte from ssegdata(R4) at offset(R5)[0-7], Store in R12
+	STR R12, [R0]				// Store the byte at R12 into the GPIOC output data register (R0)
 
 	BL delay					// Branch to delay label, storing the return address in the link register
-  	B exec   					// branch back to exec
+  	B loop   					// branch back to exec
 
 delay:
 	SUB R3, R3, #1				// Subtract 1 from R3 and store result back in R3
