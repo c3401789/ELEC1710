@@ -1,10 +1,14 @@
-  .syntax unified
-  .cpu cortex-m3
-  .thumb
-  .global task2
+// 88 bytes [134218152 - 134218064]
+.syntax unified
+.cpu cortex-m3
+.thumb
+.global task2
 
 .equ	GPIOC_ODR,	0x4001100C	// For 7-seg on pins 0 to 6
 .equ	DELAY,		0x800000	// Approx 1 second delay
+
+
+
 
 /*
 ========= Hardware Configuration =========
@@ -29,41 +33,40 @@ task2:
 	LDR R1, =ssegdata			// Load address of look-up table into R1
 	LDR R3, =DELAY				// Store the value in DELAY into R3
 								// Continue to exec label
-
-exec:
+loop:
 	LDRB R2, [R1, #12]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 	BL delay					// Branch to delay label, storing the return address in the link register
 
-	LDRB R2, [R1, #3]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #3]			// Load byte from memory, at address stored in R1 + offset #3 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 	BL delay					// Branch to delay label, storing the return address in the link register
 
-	LDRB R2, [R1, #4]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #4]			// Load byte from memory, at address stored in R1 + offset #4 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 	BL delay					// Branch to delay label, storing the return address in the link register
 
-	LDRB R2, [R1, #0]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #0]			// Load byte from memory, at address stored in R1 + offset #0 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 	BL delay					// Branch to delay label, storing the return address in the link register
 
-	LDRB R2, [R1, #1]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #1]			// Load byte from memory, at address stored in R1 + offset #1 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 	BL delay					// Branch to delay label, storing the return address in the link register
 
-	LDRB R2, [R1, #7]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #7]			// Load byte from memory, at address stored in R1 + offset #7 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 	BL delay					// Branch to delay label, storing the return address in the link register
 
-	LDRB R2, [R1, #8]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #8]			// Load byte from memory, at address stored in R1 + offset #8 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 	BL delay					// Branch to delay label, storing the return address in the link register
 
-	LDRB R2, [R1, #9]			// Load byte from memory, at address stored in R1 + offset #12 - save to R2
+	LDRB R2, [R1, #9]			// Load byte from memory, at address stored in R1 + offset #9 - save to R2
 	STR R2, [R0]				// Store the byte at R2 into the GPIO C output data register (R0)
 	BL delay					// Branch to delay label, storing the return address in the link register
 
-  	B exec   					// Return to exec; TODO Remove, not required for task
+  	B loop   					// Return to loop; TODO Remove, not required for task
 
 delay:
 	SUB R3, R3, #1				// Subtract 1 from R3 and store result back in R3
